@@ -9,13 +9,35 @@
 </head>
 
 <body>
-
+    <h1>Ball game</h1>
+    <button id="btnCreate">New game</button>
     <script>
+        let clientId = null;
         let ws = new WebSocket('ws://localhost:9090');
+        let btnCreate = document.getElementById('btnCreate');
+
+        // wiring events
+        btnCreate.addEventListener('click', e => {
+            const payLoad = {
+                method: 'create',
+                clientId
+            }
+
+            ws.send(JSON.stringify(payLoad));
+        })
 
         ws.onmessage = message => {
             const response = JSON.parse(message.data);
-            console.log(response);
+
+            if (response.method === 'connect') {
+                clientId = response.clientId;
+                console.log("Client id set successfully " + clientId)
+            }
+
+            if (response.method === "create") {
+                gameId = response.game.id;
+                console.log(`Game created successfully with id ${gameId} and ${response.game.balls} balls`)
+            }
         }
     </script>
 </body>
