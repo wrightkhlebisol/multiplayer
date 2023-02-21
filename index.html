@@ -11,12 +11,38 @@
 <body>
     <h1>Ball game</h1>
     <button id="btnCreate">New game</button>
+    <input type="text" name="txtGameId" id="txtGameId">
+    <button id="btnJoin">Join game</button>
+    <div id="divPlayers"></div>
+    <div id="divBoard"></div>
+
     <script>
         let clientId = null;
+        let gameId = null;
         let ws = new WebSocket('ws://localhost:9090');
         let btnCreate = document.getElementById('btnCreate');
+        let btnJoin = document.getElementById('btnJoin');
+        let txtGameId = document.getElementById('txtGameId');
+        let divPlayers = document.getElementById('divPlayers');
+        let divBoard = document.getElementById('divBoard');
+
+
 
         // wiring events
+        // Join Event
+        btnJoin.addEventListener('click', e => {
+            if (!gameId) gameId = txtGameId.value;
+
+            const payLoad = {
+                method: 'join',
+                clientId,
+                gameId
+            }
+
+            ws.send(JSON.stringify(payLoad));
+        })
+
+        // Create event
         btnCreate.addEventListener('click', e => {
             const payLoad = {
                 method: 'create',
@@ -37,6 +63,27 @@
             if (response.method === "create") {
                 gameId = response.game.id;
                 console.log(`Game created successfully with id ${gameId} and ${response.game.balls} balls`)
+            }
+
+            if (response.method === "join") {
+                const game = response.game;
+
+                while (divPlayers.firstChild) {
+                    divPlayers.removeChild(divPlayers.firstChild)
+                }
+
+                game.clients.forEach(client => {
+                    const divChild = document.createElement("div");
+
+                    divChild.style.width = "100px";
+                    divChild.style.height = "100px";
+                    divChild.style.backgroundColor = client.color;
+                    divChild.textContent = client.clientId;
+
+                    divPlayers.appendChild(divChild);
+                });
+                gameId = response.game.id;
+                console.log(`Game ${gameId} joined successfully with ${response.game.balls} balls and color ${response.color}`)
             }
         }
     </script>
