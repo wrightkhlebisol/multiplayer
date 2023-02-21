@@ -22,31 +22,6 @@ const games = {};
 wsServer.on('request', req => {
     // connect
     const connection = req.accept(null, req.origin)
-    connection.on('open', () => console.log('OPENED!'))
-    connection.on('close', () => console.log('CLOSED!'))
-    connection.on('message', message => {
-        const result = JSON.parse(message.utf8Data)
-
-        // Received message from client
-        // user wants to create a new game
-        if (result.method = 'create') {
-
-            const clientId = result.clientId
-            const gameId = guid();
-            games[gameId] = {
-                id: gameId,
-                balls: 20
-            }
-
-            const payLoad = {
-                method: 'create',
-                game: games[gameId]
-            }
-
-            const con = clients[clientId].connection
-            con.send(JSON.stringify(payLoad));
-        }
-    })
 
     // Generate a new clientId
     const clientId = guid();
@@ -61,6 +36,67 @@ wsServer.on('request', req => {
 
     // Send back the client connection
     connection.send(JSON.stringify(payLoad));
+
+    connection.on('open', () => console.log('OPENED!'))
+    connection.on('close', () => console.log('CLOSED!'))
+    connection.on('message', message => {
+        const clientMessage = JSON.parse(message.utf8Data)
+
+        // Received message from client
+        // user wants to create a new game
+        if (clientMessage.method === 'create') {
+
+            const clientId = clientMessage.clientId
+            const gameId = guid();
+            games[gameId] = {
+                id: gameId,
+                balls: 20,
+                clients: []
+            }
+
+            const con = clients[clientId].connection
+
+            const response = {
+                method: 'create',
+                game: games[gameId]
+            }
+
+            con.send(JSON.stringify(response));
+        }
+
+        if (clientMessage.method === 'join') {
+            const _clientId = clientMessage.clientId;
+            const _gameId = clientMessage.gameId;
+            if (!_gameId || !games[_gameId]) return;
+
+
+            const game = games[_gameId];
+            if (game && game.clients.length >= 3) {
+                // max players reach
+                return;
+            }
+
+            let color = {
+                0: 'Red', 1: 'Green', 2: 'Blue'
+            }[game?.clients.length];
+            console.log(color);
+            game.clients.push({
+                clientId: _clientId,
+                color,
+            })
+            const response = {
+                method: 'join',
+                game,
+                color
+            }
+
+            game.clients.forEach(client => {
+                // Ensure client doesn't already exist
+                clients[client.clientId].connection.send(JSON.stringify(response));
+            });
+
+        }
+    })
 })
 
 function s4() {
