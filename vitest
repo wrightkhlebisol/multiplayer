@@ -93,11 +93,11 @@
 
                 for (let i = 0; i < game.balls; i++) {
                     const b = document.createElement('button');
-                    b.id = "ball" + (i + 1);
+                    b.id = "ball" + i;
                     b.tag = i + 1;
                     b.textContent = i + 1;
-                    b.style.width = '50px';
-                    b.style.height = '50px';
+                    b.style.width = '150px';
+                    b.style.height = '150px';
 
                     b.addEventListener('click', e => {
                         b.style.background = gameColor;
@@ -118,14 +118,8 @@
                 console.log(`Game ${response.game.id} joined successfully with ${response.game.balls} balls and color ${response.color}`)
             }
 
-            if (response.method === 'update') {
-                if (!response.game.state) return;
-
-                for (const b of Object.keys(response.game.state)) {
-                    const color = response.game.state[b];
-                    const ballObject = document.getElementById('ball' + b);
-                    ballObject.style.backgroundColor = color;
-                }
+            if (response.method === 'play') {
+                console.log(response.game)
             }
         }
     </script>
